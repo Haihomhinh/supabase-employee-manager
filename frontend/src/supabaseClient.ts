@@ -10,6 +10,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 export const getAvatarUrl = (filename: string) => {
-  const { data } = supabase.storage.from('avatars').getPublicUrl(filename)
-  return data.publicUrl
+  // Dùng trực tiếp public URL thay vì qua SDK
+  return `${SUPABASE_URL}/storage/v1/object/public/avatars/${filename}`
 }
