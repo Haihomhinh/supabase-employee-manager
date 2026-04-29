@@ -172,13 +172,13 @@ function HomePage({ setPage }: any) {
             </button>
             <button onClick={() => setPage('login' as Page)}
               style={{ padding: '16px 32px', background: '#fff', color: COLORS.text, border: '1px solid #e2e8f0', borderRadius: 14, fontSize: 17, cursor: 'pointer', fontFamily: GLOBAL_FONT }}>
-              ⚙️ Truy cập Admin
+              ⚙️ Truy cập Quản lý
             </button>
           </div>
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 300 }}>
            <div className="blob" style={{ width: 320, height: 320, background: `linear-gradient(45deg, ${COLORS.primary}, ${COLORS.secondary})`, borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%', animation: 'morph 8s ease-in-out infinite', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 100 }}>
-              👥
+              🐳
            </div>
         </div>
       </div>
@@ -243,6 +243,7 @@ function HomePage({ setPage }: any) {
 }
 
 // ── EMPLOYEE LIST ─────────────────────────────────────────
+// ── EMPLOYEE LIST ─────────────────────────────────────────
 function EmployeeList({ isAdmin }: { isAdmin: boolean }) {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
@@ -269,10 +270,14 @@ function EmployeeList({ isAdmin }: { isAdmin: boolean }) {
 
   useEffect(() => { fetchEmployees() }, [])
 
-  const filtered = employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
+  // TÍNH NĂNG MỚI: Tìm kiếm theo cả tên (name) HOẶC mã nhân viên (id)
+  const filtered = employees.filter(e => 
+    e.name.toLowerCase().includes(search.toLowerCase()) ||
+    e.id.toString().includes(search)
+  )
 
   const uploadAvatar = async (file: File, filename: string) => {
-    const { error } = await supabase.storage.from('avatars').upload(filename, file, { upsert: true })
+    const { error } = await supabase.storage.from('avatars').upload(filename, file)
     if (error) throw error
     return filename
   }
@@ -321,7 +326,8 @@ function EmployeeList({ isAdmin }: { isAdmin: boolean }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h2 style={{ fontSize: 32, fontWeight: 'normal' }}>{isAdmin ? 'Quản lý nhân sự' : 'Danh sách nhân viên'}</h2>
         <div style={{ display: 'flex', gap: 15 }}>
-          <input placeholder="Tìm kiếm tên..." value={search} onChange={e => setSearch(e.target.value)}
+          {/* Đã sửa Placeholder để thể hiện rõ có thể tìm bằng ID */}
+          <input placeholder="Tìm kiếm tên hoặc ID..." value={search} onChange={e => setSearch(e.target.value)}
             style={{ padding: '12px 20px', borderRadius: 14, border: '1px solid #e2e8f0', width: 250, outline: 'none', fontFamily: GLOBAL_FONT }} />
           {isAdmin && (
             <button onClick={() => setShowAdd(!showAdd)}
@@ -352,15 +358,21 @@ function EmployeeList({ isAdmin }: { isAdmin: boolean }) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-              <th style={thStyle}>Nhân viên</th>
+              <th style={thStyle}>STT</th> {/* Đã thêm cột Số thứ tự mượt mà */}
+              <th style={thStyle}>
+                Nhân viên <span style={{ color: COLORS.primary, fontWeight: 'bold' }}>({filtered.length})</span>
+              </th> {/* Đã thêm số lượng đếm được */}
               <th style={thStyle}>ID</th>
               <th style={thStyle}>Ngày gia nhập</th>
               {isAdmin && <th style={thStyle}>Hành động</th>}
             </tr>
           </thead>
           <tbody>
-            {filtered.map(emp => (
+            {filtered.length === 0 ? (
+              <tr><td colSpan={isAdmin ? 5 : 4} style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Không tìm thấy nhân viên phù hợp</td></tr>
+            ) : filtered.map((emp, index) => (
               <tr key={emp.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                <td style={{...tdStyle, color: '#94a3b8'}}>{index + 1}</td> {/* Hiển thị STT luôn liền mạch */}
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
                     <img src={getAvatarUrl(emp.avatar)} style={{ width: 50, height: 50, borderRadius: 12, objectFit: 'cover' }} />
@@ -376,7 +388,7 @@ function EmployeeList({ isAdmin }: { isAdmin: boolean }) {
                 {isAdmin && (
                   <td style={tdStyle}>
                     {editId === emp.id ? (
-                      <button onClick={() => handleSave(emp)} style={{ ...actionBtn, background: COLORS.primary }}>Lưu</button>
+                      <button onClick={() => handleSave(emp)} style={{ ...actionBtn, background: COLORS.primary, color: '#fff' }}>Lưu</button>
                     ) : (
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => { setEditId(emp.id); setEditName(emp.name) }} style={{ ...actionBtn, background: '#f1f5f9', color: COLORS.text }}>Sửa</button>
